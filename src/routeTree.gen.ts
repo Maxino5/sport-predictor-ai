@@ -10,33 +10,63 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AccuracyRouteImport } from './routes/accuracy'
+import { Route as ValueRouteImport } from './routes/value'
+import { Route as MatchMatchIdRouteImport } from './routes/match.$matchId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AccuracyRoute = AccuracyRouteImport.update({
+  id: '/accuracy',
+  path: '/accuracy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ValueRoute = ValueRouteImport.update({
+  id: '/value',
+  path: '/value',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MatchMatchIdRoute = MatchMatchIdRouteImport.update({
+  id: '/match/$matchId',
+  path: '/match/$matchId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/accuracy': typeof AccuracyRoute
+  '/value': typeof ValueRoute
+  '/match/$matchId': typeof MatchMatchIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/accuracy': typeof AccuracyRoute
+  '/value': typeof ValueRoute
+  '/match/$matchId': typeof MatchMatchIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/accuracy': typeof AccuracyRoute
+  '/value': typeof ValueRoute
+  '/match/$matchId': typeof MatchMatchIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/accuracy' | '/value' | '/match/$matchId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/accuracy' | '/value' | '/match/$matchId'
+  id: '__root__' | '/' | '/accuracy' | '/value' | '/match/$matchId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AccuracyRoute: typeof AccuracyRoute
+  ValueRoute: typeof ValueRoute
+  MatchMatchIdRoute: typeof MatchMatchIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,22 +78,36 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/accuracy': {
+      id: '/accuracy'
+      path: '/accuracy'
+      fullPath: '/accuracy'
+      preLoaderRoute: typeof AccuracyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/value': {
+      id: '/value'
+      path: '/value'
+      fullPath: '/value'
+      preLoaderRoute: typeof ValueRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/match/$matchId': {
+      id: '/match/$matchId'
+      path: '/match/$matchId'
+      fullPath: '/match/$matchId'
+      preLoaderRoute: typeof MatchMatchIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AccuracyRoute: AccuracyRoute,
+  ValueRoute: ValueRoute,
+  MatchMatchIdRoute: MatchMatchIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
