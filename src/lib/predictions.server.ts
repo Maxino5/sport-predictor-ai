@@ -125,12 +125,9 @@ export async function buildValuePicks(date: string, limit = 6): Promise<ValuePic
 
   const picks = await Promise.all(
     pool.map(async (match): Promise<ValuePick | null> => {
-      const event = await fetchEvent(match.id);
-      if (!event) return null;
-      const [home, away] = await Promise.all([
-        fetchTeamResults(event.homeId, match.homeTeam),
-        fetchTeamResults(event.awayId, match.awayTeam),
-      ]);
+      const context = await fetchMatchContext(match.id);
+      if (!context) return null;
+      const { home, away } = context;
       if (home.results.length + away.results.length < 1) return null;
       const model = runModel({ sport: match.sport, home: home.results, away: away.results });
       const flat = model.markets
@@ -215,12 +212,9 @@ export async function buildAccuracyReport(windowDays = 5): Promise<AccuracyRepor
   const recent: AccuracyReport["recent"] = [];
 
   for (const match of finished) {
-    const event = await fetchEvent(match.id);
-    if (!event) continue;
-    const [home, away] = await Promise.all([
-      fetchTeamResults(event.homeId, match.homeTeam, match.date),
-      fetchTeamResults(event.awayId, match.awayTeam, match.date),
-    ]);
+    const context = await fetchMatchContext(match.id, match.date);
+    if (!context) continue;
+    const { home, away } = context;
     if (home.results.length + away.results.length < 1) continue;
 
     const model = runModel({ sport: match.sport, home: home.results, away: away.results });
