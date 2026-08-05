@@ -1,5 +1,5 @@
 import { runModel, normaliseMarket, fairOdds } from "./model.server";
-import { fetchEvent, fetchEventsByDay, fetchTeamResults } from "./sportsdb.server";
+import { fetchEventsByDay, fetchMatchContext } from "./espn.server";
 import { analyseMatch } from "./ai.server";
 import type {
   AccuracyReport,
@@ -36,14 +36,9 @@ export async function buildPrediction(matchId: string): Promise<Prediction | nul
   const cached = predictionCache.get(matchId);
   if (cached && cached.expires > Date.now()) return cached.value;
 
-  const event = await fetchEvent(matchId);
-  if (!event) return null;
-  const { match, homeId, awayId } = event;
-
-  const [home, away] = await Promise.all([
-    fetchTeamResults(homeId, match.homeTeam),
-    fetchTeamResults(awayId, match.awayTeam),
-  ]);
+  const context = await fetchMatchContext(matchId);
+  if (!context) return null;
+  const { match, home, away } = context;
 
   const model = runModel({ sport: match.sport, home: home.results, away: away.results });
   let markets = model.markets.map(normaliseMarket);
