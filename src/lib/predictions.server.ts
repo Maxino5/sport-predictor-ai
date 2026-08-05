@@ -1,5 +1,5 @@
 import { runModel, normaliseMarket, fairOdds } from "./model.server";
-import { fetchEvent, fetchEventsByDay, fetchTeamResults } from "./sportsdb.server";
+import { fetchEventsByDay, fetchMatchContext } from "./espn.server";
 import { analyseMatch } from "./ai.server";
 import type {
   AccuracyReport,
@@ -36,14 +36,9 @@ export async function buildPrediction(matchId: string): Promise<Prediction | nul
   const cached = predictionCache.get(matchId);
   if (cached && cached.expires > Date.now()) return cached.value;
 
-  const event = await fetchEvent(matchId);
-  if (!event) return null;
-  const { match, homeId, awayId } = event;
-
-  const [home, away] = await Promise.all([
-    fetchTeamResults(homeId, match.homeTeam),
-    fetchTeamResults(awayId, match.awayTeam),
-  ]);
+  const context = await fetchMatchContext(matchId);
+  if (!context) return null;
+  const { match, home, away } = context;
 
   const model = runModel({ sport: match.sport, home: home.results, away: away.results });
   let markets = model.markets.map(normaliseMarket);
@@ -130,12 +125,9 @@ export async function buildValuePicks(date: string, limit = 6): Promise<ValuePic
 
   const picks = await Promise.all(
     pool.map(async (match): Promise<ValuePick | null> => {
-      const event = await fetchEvent(match.id);
-      if (!event) return null;
-      const [home, away] = await Promise.all([
-        fetchTeamResults(event.homeId, match.homeTeam),
-        fetchTeamResults(event.awayId, match.awayTeam),
-      ]);
+      const context = await fetchMatchContext(match.id);
+      if (!context) return null;
+      const { home, away } = context;
       if (home.results.length + away.results.length < 1) return null;
       const model = runModel({ sport: match.sport, home: home.results, away: away.results });
       const flat = model.markets
@@ -220,12 +212,9 @@ export async function buildAccuracyReport(windowDays = 5): Promise<AccuracyRepor
   const recent: AccuracyReport["recent"] = [];
 
   for (const match of finished) {
-    const event = await fetchEvent(match.id);
-    if (!event) continue;
-    const [home, away] = await Promise.all([
-      fetchTeamResults(event.homeId, match.homeTeam, match.date),
-      fetchTeamResults(event.awayId, match.awayTeam, match.date),
-    ]);
+    const context = await fetchMatchContext(match.id, match.date);
+    if (!context) continue;
+    const { home, away } = context;
     if (home.results.length + away.results.length < 1) continue;
 
     const model = runModel({ sport: match.sport, home: home.results, away: away.results });

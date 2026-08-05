@@ -1,5 +1,5 @@
 import type { Market, Sport } from "./types";
-import type { PastResult } from "./sportsdb.server";
+import type { PastResult } from "./espn.server";
 
 const LEAGUE_AVG_GOALS = 1.38; // per team, football
 const HOME_EDGE = 1.12;
